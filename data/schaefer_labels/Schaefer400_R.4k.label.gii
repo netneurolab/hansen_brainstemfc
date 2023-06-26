@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GIFTI xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="http://brainvis.wustl.edu/caret6/xml_schemas/GIFTI_Caret.xsd"
+       Version="1"
+       NumberOfDataArrays="1">
+   <MetaData>
+      <MD>
+         <Name><![CDATA[AnatomicalStructurePrimary]]></Name>
+         <Value><![CDATA[Invalid]]></Value>
+      </MD>
+      <MD>
+         <Name><![CDATA[ParentProvenance]]></Name>
+         <Value><![CDATA[Sphere.4k.R.surf.gii:
+/home/language/jansch/workbench/bin_linux64/../exe_linux64/wb_command -surface-create-sphere 4000 Sphere.4k.R.surf.gii
+
+Conte69.R.midthickness.4k_fs_LR.surf.gii:
+/home/language/jansch/workbench/bin_linux64/../exe_linux64/wb_command -surface-create-sphere 4000 Sphere.4k.R.surf.gii
+
+]]></Value>
+      </MD>
+      <MD>
+         <Name><![CDATA[ProgramProvenance]]></Name>
+         <Value><![CDATA[Connectome Workbench
+Type: Command Line Application
+Version: 1.4.2
+Qt Compiled Version: 5.7.0
+Qt Runtime Version: 5.7.0
+Commit: 092b7f2f7dfab0f9ea7cbb6c1db2e5dffd2c1045
+Commit Date: 2020-01-07 17:24:23 -0600
+Compiled with OpenMP: YES
+Compiler: cl.exe (C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin/amd64)
+Compiler Version: 19.0.24215.1
+Compiled Debug: NO
+Operating System: Windows
+]]></Value>
+      </MD>
+      <MD>
+         <Name><![CDATA[Provenance]]></Name>
+         <Value><![CDATA[wb_command -label-resample Schaefer400_fsLR32k_R.label.gii R.sphere.32k_fs_LR.surf.gii Sphere.4k.R.surf.gii ADAP_BARY_AREA Schaefer400_R.4k.label.gii -area-surfs Conte69.R.midthickness.32k_fs_LR.surf.gii Conte69.R.midthickness.4k_fs_LR.surf.gii]]></Value>
+      </MD>
+      <MD>
+         <Name><![CDATA[WorkingDirectory]]></Name>
+         <Value><![CDATA[C:/Users/justi/OneDrive - McGill University/MisicLab/proj_receptors/data/MEG_Golia/workbench-windows64-v1.4.2/workbench/bin_windows64]]></Value>
+      </MD>
+   </MetaData>
+   <LabelTable>
+      <Label Key="0" Red="1" Green="1" Blue="1" Alpha="0"><![CDATA[???]]></Label>
+   </LabelTable>
+<DataArray Intent="NIFTI_INTENT_LABEL"
+           DataType="NIFTI_TYPE_INT32"
+           ArrayIndexingOrder="RowMajorOrder"
+           Dimensionality="1"
+           Dim0="4002"
+           Encoding="GZipBase64Binary"
+           Endian="LittleEndian"
+           ExternalFileName=""
+           ExternalFileOffset="0">
+   <MetaData>
+      <MD>
+         <Name><![CDATA[Name]]></Name>
+         <Value><![CDATA[#1]]></Value>
+      </MD>
+   </MetaData>
+   <Data>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</Data>
+</DataArray>
+</GIFTI>

@@ -1,0 +1,23 @@
+\begin{tabular}{lllll}
+\toprule
+          green &          yellow &            pink &            blue &        grey \\
+\midrule
+            MnR & RN\_subregion2\_l &    mRT\_merged\_l &          isRT\_l &      SubC\_l \\
+       PAG\_2020 &           ION\_l &           CnF\_l &     LDTg\_CGPn\_l & MiTg\_spth\_l \\
+SN\_subregion1\_l &            IC\_l &       VTA\_PBP\_l &       PnO\_PnC\_l &       SOC\_l \\
+SN\_subregion2\_l &           LPB\_l &           MPB\_r &            LC\_l &  sMRtComb\_l \\
+RN\_subregion1\_l &            Ve\_l &       VTA\_PBP\_r &           MPB\_l &         RMg \\
+          PTg\_l &         PCRtA\_l &            SC\_r &            LC\_r &       VSM\_r \\
+           SC\_l &           VSM\_l &          isRT\_r &       PnO\_PnC\_r &  sMRtComb\_r \\
+    MiTg\_spth\_r &      iMRtComb\_l &           CnF\_r &     LDTg\_CGPn\_r &       SOC\_r \\
+RN\_subregion2\_r &             ROb &    mRT\_merged\_r &           PTg\_r &             \\
+           PMnR &             RPa & SN\_subregion1\_r & RN\_subregion1\_r &             \\
+                &      iMRtComb\_r &         CLi\_RLi & SN\_subregion2\_r &             \\
+                &         PCRtA\_r &         DR\_2020 &                 &             \\
+                &            Ve\_r &                 &                 &             \\
+                &           LPB\_r &                 &                 &             \\
+                &            IC\_r &                 &                 &             \\
+                &           ION\_r &                 &                 &             \\
+                &          SubC\_r &                 &                 &             \\
+\bottomrule
+\end{tabular}
