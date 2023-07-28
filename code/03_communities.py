@@ -198,6 +198,17 @@ for i in range(len(fc)):
     fc_reg[:, i] = np.squeeze(regress_out(str_bstem_ctx.reshape(-1, 1),
                                           fc[idx_bstem, i].reshape(-1, 1)))
 
+# plot fc_reg
+fig, ax = plt.subplots(figsize=(20, 3))
+sns.heatmap(fc_reg[:, idx_ctx],
+            vmin=-np.max(abs(fc_reg[:, idx_ctx])),
+            vmax=np.max(abs(fc_reg[:, idx_ctx])),
+            cmap=cmap, square=True,
+            xticklabels=False, yticklabels=False,
+            rasterized=True)
+plt.savefig(path+'figures/eps/Schaefer' + str(parc) + '/heatmap_fcreg.eps')
+
+# plot regression example
 fig, ax = plt.subplots(2, 1, figsize=(5, 5))
 ax[0].plot(fc[info.query("labels == 'IC_r'").index, idx_bstem])
 ax[0].plot(fc[info.query("labels == '7Networks_LH_Vis_26'").index, idx_bstem])  # pick Vis_2 for schaefer100
