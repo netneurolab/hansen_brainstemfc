@@ -139,77 +139,6 @@ plt.savefig(path+'figures/eps/Schaefer' + str(parc) + '/pointbrain_bstem_hub_net
 r, p = spearmanr(info.query("structure == 'brainstem'")['tSNR'], strength['bstem_ctx'])
 
 """
-time-series variability and autocorrelation
-"""
-
-ts = np.load(datapath + 'brainstem_fc/timeseries/timeseries_brainstem_schaefer'
-             + str(parc) + '.npy')
-
-# autocorrelation (lag 1)
-lag1 = np.zeros((ts.shape[0], ts.shape[2]))  # regions x subj
-for region in range(lag1.shape[0]):
-    for subj in range(lag1.shape[1]):
-        lag1[region, subj] = pearsonr(ts[region, :-1, subj],
-                                      ts[region, 1:, subj])[0]
-
-# variability (root mean square successive difference)
-rmssd = np.zeros((ts.shape[0], ts.shape[2]))  # regions x subj
-for region in range(rmssd.shape[0]):
-    for subj in range(rmssd.shape[1]):
-        rmssd[region, subj] = get_rmssd(ts[region, :, subj])
-
-# plot brainstem --> cortex
-fig, axs = plt.subplots(1, 2, figsize=(6, 3))
-r = spearmanr(np.median(lag1[idx_bstem], axis=1), strength['bstem_ctx'])[0]
-axs[0].scatter(np.median(lag1[idx_bstem], axis=1), strength['bstem_ctx'])
-axs[0].set_ylabel('bstem --> ctx strength')
-axs[0].set_xlabel('lag-1 pearon\'s r')
-axs[0].set_title('r = ' + str(r)[:5])
-axs[0].set_aspect(1./axs[0].get_data_ratio())
-
-r = spearmanr(np.median(rmssd[idx_bstem], axis=1), strength['bstem_ctx'])[0]
-axs[1].scatter(np.median(rmssd[idx_bstem], axis=1), strength['bstem_ctx'])
-axs[1].set_xlabel('signal variability (rmssd)')
-axs[1].set_title('r = ' + str(r)[:5])
-axs[1].set_aspect(1./axs[1].get_data_ratio())
-fig.tight_layout()
-fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/scatter_ts_var_bstem-ctx.eps')
-
-# plot cortex --> brainstem
-fig, axs = plt.subplots(1, 2, figsize=(6, 3))
-r, p, _ = corr_spin(np.median(lag1[-parc:], axis=1), strength['ctx_bstem'], spins, nspins)
-axs[0].scatter(np.median(lag1[-parc:], axis=1), strength['ctx_bstem'])
-axs[0].set_ylabel('ctx --> bstem strength')
-axs[0].set_xlabel('lag-1 pearon\'s r')
-axs[0].set_title('r=' + str(r)[:5] + ', pspin=' + str(p)[:5])
-axs[0].set_aspect(1./axs[0].get_data_ratio())
-
-r, p, _ = corr_spin(np.median(rmssd[-parc:], axis=1), strength['ctx_bstem'], spins, nspins)
-axs[1].scatter(np.median(rmssd[-parc:], axis=1), strength['ctx_bstem'])
-axs[1].set_xlabel('signal variability (rmssd)')
-axs[1].set_title('r=' + str(r)[:5] + ', pspin=' + str(p)[:5])
-axs[1].set_aspect(1./axs[1].get_data_ratio())
-fig.tight_layout()
-fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/scatter_ts_var_ctx-bstem.eps')
-
-# plot cortex --> cortex
-fig, axs = plt.subplots(1, 2, figsize=(6, 3))
-r, p, _ = corr_spin(np.median(lag1[-parc:], axis=1), strength['ctx_ctx'], spins, nspins)
-axs[0].scatter(np.median(lag1[-parc:], axis=1), strength['ctx_ctx'])
-axs[0].set_ylabel('ctx --> ctx strength')
-axs[0].set_xlabel('lag-1 pearon\'s r')
-axs[0].set_title('r=' + str(r)[:4] + ', pspin=' + str(p)[:5])
-axs[0].set_aspect(1./axs[0].get_data_ratio())
-
-r, p, _ = corr_spin(np.median(rmssd[-parc:], axis=1), strength['ctx_ctx'], spins, nspins)
-axs[1].scatter(np.median(rmssd[-parc:], axis=1), strength['ctx_ctx'])
-axs[1].set_xlabel('signal variability (rmssd)')
-axs[1].set_title('r=' + str(r)[:4] + ', pspin=' + str(p)[:5])
-axs[1].set_aspect(1./axs[1].get_data_ratio())
-fig.tight_layout()
-fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/scatter_ts_var_ctx-ctx.eps')
-
-"""
 cortex --> brainstem strength
 """
 
@@ -237,6 +166,27 @@ ax.set_ylabel('ctx-ctx strength')
 ax.set_title('r = ' + str(r)[:5] + ', pspin = ' + str(p)[:5])
 fig.tight_layout()
 fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/scatter_ctx_strength.eps')
+
+"""
+laminar networks
+"""
+
+me = np.genfromtxt(path + 'data/mesulam_schaefer400.csv')
+ve = np.genfromtxt(path + 'data/voneconomo_schaefer400.csv')
+
+ve_names = ['pm', 'assoc1', 'assoc2', 'pss', 'ps', 'lim', 'ins']
+ve_order = np.array([7, 6, 2, 3, 4, 1, 5])
+me_names = ['plmb', 'het', 'uni', 'idio']
+
+fig, axs = plt.subplots(1, 2, figsize=(10, 4), sharey=True)
+sns.violinplot(x=me, y=strength['ctx_bstem'],  color=".8", ax=axs[0])
+axs[0].set_xticklabels(me_names)
+axs[0].set_ylabel('ctx weighted degree')
+sns.violinplot(x=ve, y=strength['ctx_bstem'], order=ve_order, color=".8", ax=axs[1])
+axs[1].set_xticklabels([ve_names[i-1] for i in ve_order])
+fig.tight_layout()
+fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/violin_mesulam+voneconomo.eps')
+
 
 """
 MEG dynamics

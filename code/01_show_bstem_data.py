@@ -17,7 +17,7 @@ path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
 datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/\
 proj_brainstem/data/"
 
-parc = 100
+parc = 400
 
 # load FC matlab file
 fc_matlab = scipy.io.loadmat(datapath+'brainstem_fc/parcellated/Schaefer'

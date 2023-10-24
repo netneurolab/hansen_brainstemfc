@@ -130,80 +130,11 @@ ax.set_title('ctx-->bstem FC similarity')
 plt.tight_layout()
 plt.savefig(path+'figures/eps/Schaefer' + str(parc) + '/heatmap_fcregcorr.eps')
 
-# first PC of ctx-bstem fc similarity
-pca = PCA(n_components=40)
-pcabstem = pca.fit(np.corrcoef(fc_reg[:, idx_ctx].T))
-
-fig, ax = plt.subplots()
-ax.scatter(np.arange(pcabstem.components_.shape[0]),
-           pcabstem.explained_variance_ratio_ * 100)
-ax.set_xlabel('components')
-ax.set_ylabel('variance explained')
-fig.tight_layout()
-fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/scatter_scree.eps')
-
 grad = 0  # gradient to focus on
 
 # cortical FC gradient
 fc_grad, u, s, v = diffusion_map_embed(fc[np.ix_(idx_ctx, idx_ctx)],
-                              no_dims=3, alpha=0.5)
-
-# look at first three gradients
-for grad in range(3):
-    r, p, _ = corr_spin(pcabstem.components_[grad, :], fc_grad[:, grad], spins, nspins)
-    
-    # plot surface
-    brain = plot_fsaverage(data=pcabstem.components_[grad, :],
-                       lhannot=annot.lh, rhannot=annot.rh,
-                       colormap=cmap,
-                       vmin=-np.max(np.abs(pcabstem.components_[grad, :])),
-                       vmax=np.max(np.abs(pcabstem.components_[grad, :])),
-                       views=['lat', 'med'],
-                       data_kws={'representation': "wireframe"})
-    brain.save_image(path+'figures/eps/Schaefer'
-                     + str(parc) + '/surface_fc_grad_pcabstem'
-                     + str(grad+1) + '.eps')
-
-    # compare gradients
-    fig, ax = plt.subplots()
-    ax.scatter(pcabstem.components_[grad, :], fc_grad[:, grad])
-    ax.set_xlabel('ctx --> bstem similarity gradient ' + str(grad+1))
-    ax.set_ylabel('principal cortical FC gradient ' + str(grad+1))
-    ax.set_title('r = ' + str(r)[:5] + ', pspin = ' + str(p)[:5])
-    fig.tight_layout()
-    fig.savefig(path+'figures/eps/Schaefer'
-                + str(parc) + '/scatter_gradients'
-                + str(grad+1) + '.eps')
-
-    # brainstem profiles
-    data = np.sum(fc_reg[:, idx_ctx[pcabstem.components_[grad, :] < 0]], axis=1)
-    fig = plot_point_brain(data,
-                           coords=info.query('structure == "brainstem"')[['x', 'y', 'z']].values,
-                           views_orientation='horizontal',
-                           views=['coronal_rev', 'sagittal', 'axial'],
-                           cbar=True, size=str_bstem_ctx,
-                           cmap=PuBuGn_9.mpl_colormap, edgecolor=None)
-    fig.suptitle('gradient ' + str(grad+1) + ' negative')
-    fig.savefig(path+'figures/eps/Schaefer'
-                + str(parc) + '/pointbrain_bstemfc_ctxgrad'
-                + str(grad+1) + '_neg.eps')
-
-    data = np.sum(fc_reg[:, idx_ctx[pcabstem.components_[grad, :] > 0]], axis=1)
-    fig = plot_point_brain(data,
-                           coords=info.query('structure == "brainstem"')[['x', 'y', 'z']].values,
-                           views_orientation='horizontal',
-                           views=['coronal_rev', 'sagittal', 'axial'],
-                           cbar=True, size=str_bstem_ctx,
-                           cmap=PuBuGn_9.mpl_colormap, edgecolor=None)
-    fig.suptitle('gradient ' + str(grad+1) + ' positive')
-    fig.savefig(path+'figures/eps/Schaefer'
-                + str(parc) + '/pointbrain_bstemfc_ctxgrad'
-                + str(grad+1) + '_pos.eps')
-
-
-"""
-or look at dme instead of pca
-"""
+                                       no_dims=3, alpha=0.5)
 
 # brainstem gradient
 fc_grad_bstem, u, s, v = diffusion_map_embed(np.corrcoef(fc_reg[:, idx_ctx].T),
@@ -237,6 +168,7 @@ fig.suptitle('gradient negative')
 fig.savefig(path+'figures/eps/Schaefer'
             + str(parc) + '/pointbrain_bstemfc_ctxgrad'
             + str(grad+1) + '_neg.eps')
+
 data = np.sum(fc_reg[:, idx_ctx[fc_grad_bstem[:, 0] > 0]], axis=1)
 fig = plot_point_brain(data,
                        coords=info.query('structure == "brainstem"')[['x', 'y', 'z']].values,
@@ -249,7 +181,7 @@ fig.savefig(path+'figures/eps/Schaefer'
             + str(parc) + '/pointbrain_bstemfc_ctxgrad'
             + str(grad+1) + '_pos.eps')
 
-# community detection
+# community detection (supplement)
 
 gamma_range = [x/10.0 for x in range(1, 61, 1)]
 
@@ -291,7 +223,6 @@ for i in np.unique(assignments_ctx[idx, :]):
     fig.savefig(path+'figures/eps/Schaefer'
                 + str(parc) + '/pointbrain_ctx_community_'
                 + str(i) + '_gamma_' + str(idx) + '.eps')
-
 
 # mean-variance plot and number of communities
 fig, ax = plt.subplots(2, 1, figsize=(10, 8))

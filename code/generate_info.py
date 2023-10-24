@@ -31,14 +31,16 @@ info = pd.DataFrame(data=info)
 ctx_idx = np.arange(75, parc + 75)
 bstem_idx = np.arange(58)
 dien_idx = np.arange(58, 67)
-subc_idx = np.concatenate((np.arange(67, 75),
-                           np.arange(parc + 75, parc + 83)))
+subc_idx = np.concatenate((np.arange(67, 74),
+                           np.arange(parc + 75, parc + 82)))
+cblm_idx = np.array([74, parc + 82])
 structure = np.zeros((len(info['labels']), )).astype(str)
 structure[ctx_idx] = 'cortex'
 structure[bstem_idx] = 'brainstem'
 structure[dien_idx] = 'diencephalon'
 structure[subc_idx] = 'subcortex' 
-info['structure'] = pd.Categorical(structure, ["cortex", "subcortex", "brainstem", "diencephalon"])
+structure[cblm_idx] = 'cerebellum'
+info['structure'] = pd.Categorical(structure, ["cortex", "subcortex", "brainstem", "diencephalon", "cerebellum"])
 
 ## set up hemisphere
 hemisphere = np.zeros((len(info['labels']), )).astype(str)
