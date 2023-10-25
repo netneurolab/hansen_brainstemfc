@@ -140,9 +140,11 @@ def get_reg_r_pval(X, y, spins, nspins):
 set up
 """
 
-path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
-datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/\
-proj_brainstem/data/"
+# path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
+# datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/\
+# proj_brainstem/data/"
+path = '/home/jhansen/gitrepos/hansen_brainstemfc/'
+datapath='/home/jhansen/data-2/brainstem/'
 
 parc = 400
 
@@ -185,6 +187,7 @@ regress out dominant FC pattern
 # show that it's a dominant pattern
 str_bstem_ctx = np.sum(fc[np.ix_(idx_bstem, idx_ctx)], axis=1)
 
+plt.ion()
 rho = np.array([spearmanr(str_bstem_ctx, fc[i, idx_bstem])[0] for i in idx_bc])
 plt.figure()
 sns.kdeplot(rho)
@@ -222,12 +225,6 @@ ax[1].set_ylabel('FC')
 ax[1].legend(['IC_r', 'Vis'])
 fig.tight_layout()
 fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/plot_toy_spaceseries.eps')
-
-# plot regressed FC
-sns.heatmap(fc_reg[:, idx_ctx], vmin=-np.max(np.abs(fc_reg[:, idx_ctx])),
-            vmax=np.max(np.abs(fc_reg[:, idx_ctx])), cmap=PuBuGn_9.mpl_colormap,
-            xticklabels=False, yticklabels=False, rasterized=True, square=True)
-plt.savefig(path+'figures/eps/Schaefer' + str(parc) + '/heatmap_fcreg.eps')
 
 """
 community detection
@@ -321,7 +318,7 @@ for i in np.unique(assignments_bstem[idx, :]):
 neurosynth decoding
 """
 
-nsynth = pd.read_csv(path+'data/atl-schaefer2018_res-'
+nsynth = pd.read_csv(path+'data/neurosynth/atl-schaefer2018_res-'
                      + str(parc) +'_neurosynth.csv',
                      index_col=0)
 
@@ -351,7 +348,8 @@ for commID in np.unique(assignments_bstem[idx, :]):
 receptor decoding
 """
 
-recpath = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_receptors/github/hansen_receptors/data/PET_parcellated/scale" + str(parc) + "/"
+# recpath = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_receptors/github/hansen_receptors/data/PET_parcellated/scale" + str(parc) + "/"
+recpath = '/home/jhansen/gitrepos/hansen_receptors/data/PET_parcellated/scale' + str(parc) + '/'
 
 rec_cols = ['5HT1a_cumi_hc8_beliveau',
             '5HT1b_p943_hc65_gallezot',
@@ -447,7 +445,7 @@ print regions in community
 """
 
 for i in range(1, ncommun + 1):
-    np.savetxt(path+'results/community_regions_' + str(i) + '.txt',
+    np.savetxt(path+'results/Schaefer' + str(parc) + '/community_detection/community_regions_' + str(i) + '.txt',
                info.query("structure == 'brainstem'")['labels'][assignments_bstem[idx, :] == i].values,
                delimiter = " ",
                newline="\n",
@@ -464,5 +462,5 @@ for i, key in enumerate(community_nuclei.keys()):
             community_nuclei[key].append(nuclei_names[row])
         except IndexError:
             community_nuclei[key].append(" ")
-pd.DataFrame(data=community_nuclei).to_latex(path+'results/Schaefer' + str(parc) + '/comunity_regions_latex.txt',
+pd.DataFrame(data=community_nuclei).to_latex(path+'results/Schaefer' + str(parc) + '/community_detection/comunity_regions_latex.txt',
                                              index=False)

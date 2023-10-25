@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from nilearn.datasets import fetch_atlas_schaefer_2018
-from scipy.stats import pearsonr, spearmanr, zscore
+from scipy.stats import spearmanr, zscore, f_oneway
 from palettable.colorbrewer.sequential import PuBuGn_9
 from netneurotools import datasets
 from netneurotools.plotting import plot_point_brain, plot_fsaverage
@@ -50,9 +50,11 @@ def corr_spin(x, y, spins, nspins):
 set up
 """
 
-path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
-datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/\
-proj_brainstem/data/"
+# path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
+# datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/\
+# proj_brainstem/data/"
+path = '/home/jhansen/gitrepos/hansen_brainstemfc/'
+datapath='/home/jhansen/data-2/brainstem/'
 
 parc = 400
 
@@ -149,26 +151,8 @@ brain = plot_fsaverage(data=strength['ctx_bstem'],
                        data_kws={'representation': "wireframe"})
 brain.save_image(path+'figures/eps/Schaefer' + str(parc) + '/surface_ctx_bstem_strength.eps')
 
-# cortex --> cortex strength
-brain = plot_fsaverage(data=strength['ctx_ctx'],
-                       lhannot=annot.lh, rhannot=annot.rh,
-                       colormap=PuBuGn_9.mpl_colormap,
-                       views=['lat', 'med'],
-                       data_kws={'representation': "wireframe"})
-brain.save_image(path+'figures/eps/Schaefer' + str(parc) + '/surface_ctx_ctx_strength.eps')
-
-# compare
-fig, ax = plt.subplots()
-r, p, _ = corr_spin(strength['ctx_bstem'], strength['ctx_ctx'], spins, nspins)
-ax.scatter(strength['ctx_bstem'], strength['ctx_ctx'])
-ax.set_xlabel('ctx-bstem strength')
-ax.set_ylabel('ctx-ctx strength')
-ax.set_title('r = ' + str(r)[:5] + ', pspin = ' + str(p)[:5])
-fig.tight_layout()
-fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/scatter_ctx_strength.eps')
-
 """
-laminar networks
+laminar/cytoarchitectonic networks
 """
 
 me = np.genfromtxt(path + 'data/mesulam_schaefer400.csv')
@@ -187,6 +171,8 @@ axs[1].set_xticklabels([ve_names[i-1] for i in ve_order])
 fig.tight_layout()
 fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/violin_mesulam+voneconomo.eps')
 
+f, p = f_oneway(*[strength['ctx_bstem'][me==i] for i in range(1, 5)])
+f, p = f_oneway(*[strength['ctx_bstem'][ve==i] for i in range(1, 8)])
 
 """
 MEG dynamics
@@ -194,8 +180,8 @@ MEG dynamics
 
 # fetch and parcellate meg maps
 megmaps = fetch_annotation(source='hcps1200', den='4k')
-s_parc = (path + 'data/Schaefer' + str(parc) + '_L.4k.label.gii',
-          path + 'data/Schaefer' + str(parc) + '_R.4k.label.gii')
+s_parc = (path + 'data/schaefer_labels/Schaefer' + str(parc) + '_L.4k.label.gii',
+          path + 'data/schaefer_labels/Schaefer' + str(parc) + '_R.4k.label.gii')
 parcellater = Parcellater(s_parc, 'fsLR')
 megmaps_parc = dict([])
 for (src, desc, space, den) in megmaps.keys():
@@ -241,84 +227,3 @@ for desc in megmaps_parc.keys():
                            views=['lat', 'med'],
                            data_kws={'representation': "wireframe"})
     brain.save_image(path+'figures/eps/Schaefer' + str(parc) + '/surface_' + desc + '.eps')
-
-
-"""
-receptors
-"""
-
-recpath = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_receptors/github/hansen_receptors/data/PET_parcellated/scale" + str(parc) + "/"
-
-rec_cols = ['5HT1a_cumi_hc8_beliveau',
-            '5HT1b_p943_hc65_gallezot',
-            '5HT2a_cimbi_hc29_beliveau',
-            '5HT4_sb20_hc59_beliveau',
-            '5HT6_gsk_hc30_radhakrishnan',
-            '5HTT_dasb_hc100_beliveau',
-            'A4B2_flubatine_hc30_hillmer',
-            'CB1_omar_hc77_normandin',
-            'D2_flb457_hc55_sandiego',
-            'DAT_fepe2i_hc6_sasaki',
-            'GABAa-bz_flumazenil_hc16_norgaard',
-            'H3_cban_hc8_gallezot',
-            'M1_lsn_hc24_naganawa',
-            'mGluR5_abp_hc28_dubois',
-            'MU_carfentanil_hc39_turtonen',
-            'NAT_MRB_hc77_ding',
-            'NMDA_ge179_hc29_galovic',
-            'VAChT_feobv_hc18_aghourian_sum']
-
-receptor_ctx = dict([])
-for rec in rec_cols:
-    receptor_ctx[rec] = np.genfromtxt(recpath+rec+'.csv', delimiter=',')
-receptor_ctx = pd.DataFrame(data=receptor_ctx, index=info.query('structure == "cortex"')['labels'])
-
-# bstem --> ctx
-rsq = np.zeros((len(fc), ))
-for i in range(len(fc)):
-    if i < len(idx_bstem):
-        rsq[i] = get_reg_r_sq(zscore(receptor_ctx), zscore(fc[i, idx_ctx]))
-    else:
-        rsq[i] = get_reg_r_sq(zscore(receptor_ctx), zscore(fc[i, idx_ctx]))
-
-fig = plot_point_brain(data=rsq[idx_bstem],
-                       coords=info.query("structure == 'brainstem'")[['x', 'y', 'z']].values,
-                       size=strength['bstem_ctx']**0.9,  # 0.9 for schaefer400, 1.2 for schaefer100
-                       views_orientation='horizontal',
-                       views=['coronal_rev', 'sagittal', 'axial'],
-                       views_size=(2.4, 2.4),
-                       cmap=PuBuGn_9.mpl_colormap, cbar=True,
-                       edgecolor=None)
-fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/pointbrain_receptor_rsq.eps')
-
-plt.figure()
-sns.kdeplot(rsq[idx_ctx], color='orange')
-sns.kdeplot(rsq[idx_bstem], color='darkgreen')
-plt.xlabel('rsq')
-plt.legend(['cortex', 'brainstem'])
-plt.tight_layout()
-plt.savefig(path+'figures/eps/Schaefer' + str(parc) + '/kdeplot_receptor_rsq.eps')
-
-
-# ctx --> bstem
-rsq = np.zeros((len(fc), ))
-for i in range(len(fc)):
-    rsq[i] = get_reg_r_sq(zscore(receptor_bstem[rec_cols], nan_policy='omit'), zscore(fc[i, idx_bstem]))
-
-fig = plot_point_brain(data=rsq[idx_bstem],
-                       coords=info.query("structure == 'brainstem'")[['x', 'y', 'z']].values,
-                       size=strength['bstem_ctx']**0.9,  # 0.9 for schaefer400, 1.2 for schaefer100
-                       views_orientation='horizontal',
-                       views=['coronal_rev', 'sagittal', 'axial'],
-                       views_size=(2.4, 2.4),
-                       cmap=PuBuGn_9.mpl_colormap, cbar=True,
-                       edgecolor=None)
-fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/pointbrain_receptor_rsq.eps')
-
-plt.figure()
-sns.kdeplot(rsq[idx_ctx], color='orange')
-sns.kdeplot(rsq[idx_bstem], color='darkgreen')
-plt.xlabel('rsq')
-plt.legend(['cortex', 'brainstem'])
-plt.tight_layout()
-plt.savefig(path+'figures/eps/Schaefer' + str(parc) + '/kdeplot_receptor_rsq.eps')

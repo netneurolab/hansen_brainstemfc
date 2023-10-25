@@ -16,9 +16,11 @@ import random
 set up
 """
 
-path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
-datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/\
-proj_brainstem/data/"
+# path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
+# datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/\
+# proj_brainstem/data/"
+path = '/home/jhansen/gitrepos/hansen_brainstemfc/'
+datapath='/home/jhansen/data-2/brainstem/'
 
 parc = 400
 

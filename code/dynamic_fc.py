@@ -29,6 +29,17 @@ ts = np.load(datapath + 'brainstem_fc/timeseries/timeseries_brainstem_schaefer'
 zts = zscore(ts[-parc:, :, :], axis=1)  # zscore timeseries over time
 u, v = np.where(np.triu(np.ones(parc), 1))
 dfc = np.multiply(zts[u, :, :], zts[v, :, :])
+# put back into matrix so it's (node x node x time x subj)
+dfcmat = np.zeros((parc, parc, ts.shape[1], ts.shape[2]))
+for t in range(dfc.shape[1]):
+    # this is surely an awful and time+space intensive way of doing this sorry
+    dfcmat[np.triu_indices(parc, 1)[0], np.triu_indices(parc, 1)[1], t, :] = dfc[:, t, :]
+    dfcmat[:, :, t, :] = dfcmat[:, :, t, :] + dfcmat[:, :, t, :].transpose(1, 0, 2)
+
+pc = np.zeros((dfcmat.shape[2], ))
+for t in range(len(pc)):
+    pc[t] = np.mean(participation_coef(dfcmat[:, :, t, 0], info.query("structure == 'cortex'")['rsn']))
+
 
 mdfc = np.median(abs(dfc), axis=0)
 
@@ -37,12 +48,12 @@ mdfc = np.median(abs(dfc), axis=0)
 # pedunculopontine nuclei, basal forebrain, laterodorsal tegmental area,
 # raphe nuclei, tuberomammilary nucleus of hypothalamus
 
-nmod_nuclei = ["MnR", "RMg", "ROb", "RPa", "CLi_RLi", "DR", "PMnR", # raphe nuclei
-               "SN_subregion2_l", "SN_subregion2_r",                # substantia nigra: pars compacta
-               "LDTg_CGPn_l", "LDTg_CGPn_r",                        # laterodorsal tegmental nucleus
-               "LC_l", "LC_r",                                      # locus coeruleus
-               "VTA_PBP_l", "VTA_PBP_r",                            # ventral tegmental area
-               "PTg_l", "PTg_r"]                                    # pedunculotegmental nuclei
+nmod_nuclei = ["MnR", "RMg", "ROb", "RPa", "CLi_RLi", "DR_2020", "PMnR", # raphe nuclei
+               "SN_subregion2_l", "SN_subregion2_r",                     # substantia nigra: pars compacta
+               "LDTg_CGPn_l", "LDTg_CGPn_r",                             # laterodorsal tegmental nucleus
+               "LC_l", "LC_r",                                           # locus coeruleus
+               "VTA_PBP_l", "VTA_PBP_r",                                 # ventral tegmental area
+               "PTg_l", "PTg_r"]                                         # pedunculotegmental nuclei
 nmod_idx = np.array(info[info['labels'].isin(nmod_nuclei)].index)
 
 for subj in range(20):
@@ -54,3 +65,10 @@ for subj in range(20):
     ax.set_ylabel('corr')
     ax.set_title('subj' + str(subj))
 
+## correlations with receptors?
+zts = zscore(ts, axis=1)
+u, v = np.where(np.ones((len(idx_bstem), len(idx_ctx))))
+dfc = np.multiply(zts[u, :, :], zts[v + len(idx_bstem), :, :])
+dfc = np.reshape(dfc, (len(idx_bstem), parc, ts.shape[1], ts.shape[2]))
+
+# 

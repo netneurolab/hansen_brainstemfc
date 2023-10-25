@@ -14,6 +14,7 @@ import pandas as pd
 from palettable.colorbrewer.sequential import (PuBuGn_9,
                                                PuBuGn_4,
                                                PuRd_4,
+                                               PuRd_9,
                                                PuBuGn_8)
 from matplotlib.colors import LinearSegmentedColormap
 from sklearn.linear_model import LinearRegression
@@ -65,9 +66,11 @@ def diffusion_map_embed(X, no_dims=5, alpha=1, sigma=1):
 set up
 """
 
-path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
-datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/\
-proj_brainstem/data/"
+# path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
+# datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/\
+# proj_brainstem/data/"
+path = '/home/jhansen/gitrepos/hansen_brainstemfc/'
+datapath='/home/jhansen/data-2/brainstem/'
 
 parc = 400
 
@@ -120,6 +123,7 @@ for i in range(len(fc)):
 gradient of FC connectivity
 """
 
+plt.ion()
 ax = plot_mod_heatmap(np.corrcoef(fc_reg[:, idx_ctx].T),
                       info.query("structure == 'cortex'")['rsn'],
                       cmap=cmap, vmin=-1, vmax=1,
@@ -140,7 +144,6 @@ fc_grad, u, s, v = diffusion_map_embed(fc[np.ix_(idx_ctx, idx_ctx)],
 fc_grad_bstem, u, s, v = diffusion_map_embed(np.corrcoef(fc_reg[:, idx_ctx].T),
                                 no_dims=3, alpha=0.5)
 
-plt.figure()
 h = sns.jointplot(x=fc_grad[:, 0], y=fc_grad_bstem[:, 0])
 h.set_axis_labels("functional hierarchy", "brainstem gradient")
 h.figure.tight_layout()
@@ -175,7 +178,7 @@ fig = plot_point_brain(data,
                        views_orientation='horizontal',
                        views=['coronal_rev', 'sagittal', 'axial'],
                        cbar=True, size=str_bstem_ctx,
-                       cmap=PuBuGn_9.mpl_colormap, edgecolor=None)
+                       cmap=PuRd_9.mpl_colormap, edgecolor=None)
 fig.suptitle('gradient positive')
 fig.savefig(path+'figures/eps/Schaefer'
             + str(parc) + '/pointbrain_bstemfc_ctxgrad'
@@ -185,8 +188,10 @@ fig.savefig(path+'figures/eps/Schaefer'
 
 gamma_range = [x/10.0 for x in range(1, 61, 1)]
 
-assignments_ctx = np.load(path+'results/community_detection/Schaefer'
-                            + str(parc) +'/assignments_ctx.npy').T
+assignments_ctx = np.load(path+'results/Schaefer'
+                            + str(parc) +'/community_detection/assignments_ctx.npy').T
+zrand = np.load(path+'results/Schaefer' + str(parc)
+                + '/community_detection/Zrand_ctx.npy')
 
 # plot heatmap with modules
 idx = 5  # gamma = 0.6
@@ -210,7 +215,7 @@ brain.save_image(path+'figures/eps/Schaefer'
                  + str(idx) + '.eps')
 
 # community-specific brainstem FC patterns
-for i in np.unique(assignments_ctx[idx, :]):
+for ii, i in enumerate(np.unique(assignments_ctx[idx, :])):
     data = np.sum(fc_reg[:, idx_ctx[assignments_ctx[idx, :] == i]], axis=1)
     fig = plot_point_brain(data,
                            coords=info.query("structure == 'brainstem'")[['x', 'y', 'z']].values,
@@ -218,11 +223,19 @@ for i in np.unique(assignments_ctx[idx, :]):
                            views_orientation='horizontal',
                            views=['coronal_rev', 'sagittal', 'axial'],
                            views_size=(5, 5),
-                           cmap=PuBuGn_9.mpl_colormap, cbar=True,
+                           cmap=[PuBuGn_9.mpl_colormap, PuRd_9.mpl_colormap][ii],
+                           cbar=True,
                            edgecolor=None)
     fig.savefig(path+'figures/eps/Schaefer'
                 + str(parc) + '/pointbrain_ctx_community_'
                 + str(i) + '_gamma_' + str(idx) + '.eps')
+
+# show that the community detection is appropriate
+m = np.zeros((len(gamma_range), ))
+v = np.zeros((len(gamma_range), ))
+for i in range(len(gamma_range)):
+    m[i] = np.mean(zrand[i, :])
+    v[i] = np.std(zrand[i, :] ** 2)
 
 # mean-variance plot and number of communities
 fig, ax = plt.subplots(2, 1, figsize=(10, 8))

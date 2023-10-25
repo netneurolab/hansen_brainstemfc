@@ -6,6 +6,7 @@ from netneurotools.plotting import plot_point_brain
 import scipy.io
 import pandas as pd
 from scipy.spatial.distance import squareform, pdist
+from scipy.stats import ttest_ind
 from palettable.colorbrewer.sequential import PuBuGn_9
 
 
@@ -13,9 +14,11 @@ from palettable.colorbrewer.sequential import PuBuGn_9
 set up
 """
 
-path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
-datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/\
-proj_brainstem/data/"
+# path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
+# datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/\
+# proj_brainstem/data/"
+path = '/home/jhansen/gitrepos/hansen_brainstemfc/'
+datapath='/home/jhansen/data-2/brainstem/'
 
 parc = 400
 
@@ -54,7 +57,7 @@ fig.savefig(path+'figures/eps/Schaefer'
             + str(parc) + '/pointbrain_toy.eps')
 
 """
-parcel size + tSNR
+parcel size + tSNR (supplement)
 """
 
 # tSNR whole brain
@@ -116,14 +119,11 @@ idx1 = info.query("structure == 'brainstem' | structure == 'cortex'").sort_value
 idx2 = info.query("structure == 'brainstem'").sort_values(by=['hemisphere']).index.values
 idx3 = info.query("structure == 'cortex'").sort_values(by=['hemisphere', 'rsn']).index.values
 
-fclist = [fc[np.ix_(idx1, idx1)],  # cortex + brainstem
-          fc[np.ix_(idx2, idx2)],  # brainstem only
-          fc[np.ix_(idx2, idx3)]   # brainstem --> cortex
-          ]
-
-fig, axs = plt.subplots(2, 3, figsize=(15, 10))
-fig2, ax = plt.subplots()
-for i, f in enumerate(fclist):
+# FC heatmaps
+fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+for i, f in enumerate([fc[np.ix_(idx1, idx1)],     # cortex + brainstem
+                       fc[np.ix_(idx2, idx2)],     # brainstem only
+                       fc[np.ix_(idx2, idx3)]]):   # brainstem --> cortex
     sns.heatmap(f,
                 vmin=0,
                 vmax=np.max(abs(f)),
@@ -131,24 +131,35 @@ for i, f in enumerate(fclist):
                 square=True,
                 xticklabels=False,
                 yticklabels=False,
-                ax=axs[0, i],
+                ax=axs[i],
                 rasterized=True)
-    sns.histplot(f[np.triu_indices(len(f), k=1)],
-                 ax=axs[1, i])
-    axs[1, i].set_xlabel('fc')
-    sns.kdeplot(f[np.triu_indices(len(f), k=1)],
-                ax=ax)
-axs[0, 0].set_xlabel("both")
-axs[0, 0].set_ylabel("both")
-axs[0, 1].set_xlabel("brainstem")
-axs[0, 1].set_ylabel("brainstem")
-axs[0, 2].set_xlabel("cortex")
-axs[0, 2].set_ylabel("brainstem")
-ax.set_xlabel("FC")
-ax.legend(["both", "bstem only", "bstem to ctx"])
-fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/heatmap_histogram_fc.eps')
-fig2.savefig(path+'figures/eps/Schaefer' + str(parc) + '/kdeplot_fc.eps')
+axs[0].set_xlabel("both")
+axs[0].set_ylabel("both")
+axs[1].set_xlabel("brainstem")
+axs[1].set_ylabel("brainstem")
+axs[2].set_xlabel("cortex")
+axs[2].set_ylabel("brainstem")
+fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/heatmap_fc.eps')
 
+# FC histograms
+fig, ax = plt.subplots()
+for i, f in enumerate([fc[np.ix_(idx2, idx2)],     # brainstem only
+                       fc[np.ix_(idx2, idx3)],     # brainstem --> cortex
+                       fc[np.ix_(idx3, idx3)]]):   # cortex only
+    if f.shape[0] == f.shape[1]:  # if square, plot upper triangle
+        sns.kdeplot(f[np.triu_indices(len(f), k=1)],
+                    ax=ax)
+    else:  # else, plot all elements
+        sns.kdeplot(f.flatten(), ax=ax)
+ax.set_xlabel("FC")
+ax.legend(["bstem only", "bstem to ctx", "ctx only"])
+fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/kdeplot_fc.eps')
+
+# t-test: is bstem-ctx fc > bstem-bstem fc?
+t, p= ttest_ind(fc[np.ix_(idx2, idx3)].flatten(),
+                fc[np.ix_(idx2, idx2)][np.triu_indices(len(idx2), k=1)],
+                equal_var=False)
+# Ttest_indResult(statistic=33.91973991912895, pvalue=4.8001996581462265e-198)
 
 """
 Distance
