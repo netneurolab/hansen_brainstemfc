@@ -145,9 +145,11 @@ fc_grad_bstem, u, s, v = diffusion_map_embed(np.corrcoef(fc_reg[:, idx_ctx].T),
                                 no_dims=3, alpha=0.5)
 
 h = sns.jointplot(x=fc_grad[:, 0], y=fc_grad_bstem[:, 0])
-h.set_axis_labels("functional hierarchy", "brainstem gradient")
+h.set_axis_labels("cortex-cortex gradient", "cortex-brainstem gradient")
 h.figure.tight_layout()
 h.figure.savefig(path+'figures/eps/Schaefer' + str(parc) + '/jointplot_gradients.eps')
+
+r, p, _ = corr_spin(fc_grad[:, 0], fc_grad_bstem[:, 0], spins, nspins)
 
 brain = plot_fsaverage(data=fc_grad_bstem[:, 0],
                    lhannot=annot.lh, rhannot=annot.rh,
