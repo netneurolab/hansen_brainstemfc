@@ -143,3 +143,56 @@ ax[2].set_title('r = ' + str(rho)[:5] + ', p = ' + str(pval)[:5])
 
 fig.tight_layout()
 fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/scatter_3Tvs7T.eps')
+
+# within subject
+rhobstem = np.zeros((nsubj, ))
+rhoctx = np.zeros((nsubj, ))
+fc3Tbstem = fc3T[:58, :58, :]
+fc3Tctx = fc3T[-parc:, -parc:, :]
+fc7Tbstem = fc[:58, :58, :]
+fc7Tctx = fc[np.ix_(idx_ctx, idx_ctx, np.arange(fc.shape[2]))]
+for i in range(nsubj):
+    rhobstem[i] = spearmanr(fc3Tbstem[:, :, i][np.triu_indices(len(idx_bstem), 1)],
+                            fc7Tbstem[:, :, i][np.triu_indices(len(idx_bstem), 1)])[0]
+    rhoctx[i] = spearmanr(fc3Tctx[:, :, i][np.triu_indices(parc, 1)],
+                          fc7Tctx[:, :, i][np.triu_indices(parc, 1)])[0]
+
+# plot
+fig, ax = plt.subplots()
+for i in range(nsubj):
+    ax.scatter(rhobstem[i], rhoctx[i])
+    ax.text(rhobstem[i], rhoctx[i], s=str(i+1), fontsize=8)
+ax.set_xlabel('within-brainstem 3T vs 7T spearmanr')
+ax.set_ylabel('within-cortex 3T vs 7T spearmanr')
+
+# check all the group averages
+fig, ax = plt.subplots(2, 3, figsize=(15, 10))
+sns.heatmap(fc3T[-parc:, -parc:],
+            cmap=PuBuGn_9.mpl_colormap,
+            square=True, ax=ax[0, 0],
+            xticklabels=False, yticklabels=False)
+sns.heatmap(fc7T[-parc:, -parc:],
+            cmap=PuBuGn_9.mpl_colormap,
+            square=True, ax=ax[1, 0],
+            xticklabels=False, yticklabels=False)
+sns.heatmap(fc3T[:58, :58],
+            cmap=PuBuGn_9.mpl_colormap,
+            square=True, ax=ax[0, 1],
+            xticklabels=False, yticklabels=False)
+sns.heatmap(fc7T[:58, :58],
+            cmap=PuBuGn_9.mpl_colormap,
+            square=True, ax=ax[1, 1],
+            xticklabels=False, yticklabels=False)
+sns.heatmap(fc3T[:58, -parc:],
+            cmap=PuBuGn_9.mpl_colormap,
+            square=True, ax=ax[0, 2],
+            xticklabels=False, yticklabels=False)
+sns.heatmap(fc7T[:58, -parc:],
+            cmap=PuBuGn_9.mpl_colormap,
+            square=True, ax=ax[1, 2],
+            xticklabels=False, yticklabels=False)
+ax[0, 0].set_ylabel('3T')
+ax[1, 0].set_ylabel('7T')
+ax[0, 0].set_title('within cortex')
+ax[0, 1].set_title('within brainstem')
+ax[0, 2].set_title('brainstem-cortex')
