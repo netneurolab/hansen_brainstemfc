@@ -3,36 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from nilearn.datasets import fetch_atlas_schaefer_2018
-from scipy.stats import spearmanr, zscore, f_oneway
+from scipy.stats import spearmanr, f_oneway
 from palettable.colorbrewer.sequential import PuBuGn_9
 from netneurotools import datasets
-from netneurotools.plotting import plot_point_brain, plot_fsaverage
-from netneurotools.stats import gen_spinsamples
+from netneurotools.plotting import plot_fsaverage
 from neuromaps.datasets import fetch_annotation
 from neuromaps.parcellate import Parcellater
-from sklearn.linear_model import LinearRegression
 from statsmodels.stats.multitest import multipletests
 import scipy.io
 import pandas as pd
-import math
-
-
-def get_rmssd(ts):
-    n = len(ts) - 1
-    return math.sqrt(np.sum(np.array([(ts[i+1] - ts[i])**2 for i in range(n)])) / (2*n))
-
-
-def get_reg_r_sq(X, y):
-    lin_reg = LinearRegression()
-    lin_reg.fit(X, y)
-    yhat = lin_reg.predict(X)
-    SS_Residual = sum((y - yhat) ** 2)
-    SS_Total = sum((y - np.mean(y)) ** 2)
-    r_squared = 1 - (float(SS_Residual)) / SS_Total
-    adjusted_r_squared = 1 - (1 - r_squared) * \
-        (len(y) - 1) / (len(y) - X.shape[1] - 1)
-    return adjusted_r_squared
-
 
 def corr_spin(x, y, spins, nspins):
     rho, _ = spearmanr(x, y)

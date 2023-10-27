@@ -6,9 +6,6 @@ generate brainstem receptor dataframe
 import numpy as np
 import pandas as pd
 from neuromaps.parcellate import Parcellater
-from neuromaps.datasets import fetch_atlas
-import nibabel as nib
-from os.path import exists
 
 path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
 datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/data/"
@@ -34,7 +31,6 @@ np.savetxt(path+'data/brainstem_fc/labels_BrainstemNavigator.csv',
            nuclei_names_nav, delimiter=',', fmt='%s')
 np.savetxt(path+'data/brainstem_fc/labels_dataframes.csv',
            nuclei_names, delimiter=',', fmt='%s')
-
 
 receptors_nii = [receptpath+'data/PET_nifti_images/5HT1a_way_hc36_savli.nii',
                  receptpath+'data/PET_nifti_images/5HT1a_cumi_hc8_beliveau.nii',
@@ -98,12 +94,6 @@ for receptor in receptors_nii:
 dataframe = pd.DataFrame(data=bstem_receptor_den, index=nuclei_names)
 dataframe.to_csv(path+'results/brainstem_receptor_density.csv')
 
-
-
-
-
-
-
 """
 quality check
 """
@@ -134,5 +124,3 @@ for substring in receptor_names:
         ax.set_title('r=' + str(r)[:5])
     fig.tight_layout()
     fig.savefig(path+'figures/png/scatter_receptor_bstem_qc_' + substring + '.png')
-
-
