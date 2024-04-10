@@ -8,11 +8,11 @@ The [code](code/) folder contains all the code used to run the analyses and gene
 A description of each file follows (in an order that complements the manuscript):
 - [generate_info.py](code/generate_info.py) will create the `info` dataframe that stores information about each parcel, including the parcel's name, structure (brainstem, cortex, diencephalon, subcortex), the hemisphere (right, left, medial), parcel centroid coordinates, the number of voxels mapped to the parcel (i.e. volume), and the tSNR of the parcel. Parcels in the `info` dataframe are in the same order as in the $483\times 483$ fc matrix I use in the analyses.
 - [01_show_bstem_data.py](code/01_show_bstem_data.py) covers Figure 1 and supplementary Figure S2 where I plot some basic features of brainstem and cortical fc.
-- [02_hubs.py](code/02_hubs.py) covers Figure 2 and calculates the weighted degree of fc for brainstem-to-cortex and cortex-to-brainstem fc (also called brainstem-to-cortex and cortex-to-brainstem hubs). This is also where I look at MEG-derived patterns of neuro-oscillatory dynamics.
-- [03_communities.py](code/03_communities.py) covers Figure 3, supplementary Figures S3, S4, S10, and Figure 4 where I look at communities of brainstem nuclei that are similarly functionally connected with the cortex. Then I do a neurosynth decoding (Figure 3d) and a receptor decoding (Figure 4).
-- [04_gradients.py](code/04_gradients.py) covers Figure 5 and supplementary Figure S5 where I look at how cortical regions are similarly functionally connected with the brainstem.
-- [05_subcortex.py](code/05_subcortex.py) covers supplementary Figure S9 where I replicate the findings in 14 FreeSurfer subcortical structures + 8 Brainstem Navigator diencephalic nuclei + the hypothalamus.
-- [supplement.py](code/supplement.py) covers supplementary Figures S6 (split-half analysis) and S8 (replication in 3 Tesla data) where I conduct some sensitivity and robustness analyses.
+- [02_hubs.py](code/02_hubs.py) covers Figure 2, supplementary Figures S3, and S22, where I calculates the weighted degree of brainstem-to-cortex and cortex-to-brainstem fc (also called brainstem-to-cortex and cortex-to-brainstem hubs). This is also where I look at MEG-derived patterns of neuro-oscillatory dynamics.
+- [03_communities.py](code/03_communities.py) covers Figure 3, Figure 4, and supplementary Figures S5--S11, S21 where I look at communities of brainstem nuclei that are similarly functionally connected with the cortex. Then I do a neurosynth decoding (Figure 3d) and a receptor decoding (Figure 4).
+- [04_gradients.py](code/04_gradients.py) covers Figure 5 and supplementary Figure S12 where I look at how cortical regions are similarly functionally connected with the brainstem.
+- [05_subcortex.py](code/05_subcortex.py) covers supplementary Figure S13 where I replicate the findings in 14 FreeSurfer subcortical structures + 8 Brainstem Navigator diencephalic nuclei + the hypothalamus.
+- [supplement.py](code/supplement.py) covers supplementary Figures S14 (split-half analysis), S16 (replication in 3 Tesla data), S17 (individual variability), and S18 (individual connectomes).
 
 ## `data`
 The [data](data/) folder contains data files used for the analyses.
