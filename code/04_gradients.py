@@ -6,7 +6,6 @@ from netneurotools.plotting import (plot_point_brain,
                                     plot_mod_heatmap,
                                     plot_fsaverage)
 from netneurotools.datasets import fetch_schaefer2018
-from netneurotools.stats import gen_spinsamples
 from nilearn.datasets import fetch_atlas_schaefer_2018
 import scipy.io
 from scipy.stats import spearmanr
@@ -18,7 +17,6 @@ from palettable.colorbrewer.sequential import (PuBuGn_9,
                                                PuBuGn_8)
 from matplotlib.colors import LinearSegmentedColormap
 from sklearn.linear_model import LinearRegression
-from sklearn.decomposition import PCA
 
 
 def regress_out(x, y):
@@ -48,7 +46,8 @@ def diffusion_map_embed(X, no_dims=5, alpha=1, sigma=1):
     X = X - np.min(X)
     X = X / np.max(X)
     sum_X = np.sum(X ** 2, axis=1)
-    K = np.exp(-1 * (sum_X.T + (sum_X.T - 2 * (X @ X.T).T).T) / (2 * sigma ** 2))
+    K = np.exp(-1 * (sum_X.T + (sum_X.T - 2 * (X @ X.T).T).T)
+               / (2 * sigma ** 2))
 
     p = np.sum(K, axis=0, keepdims=True).T
     K = np.divide(K, (p @ p.T) ** alpha)
@@ -66,11 +65,8 @@ def diffusion_map_embed(X, no_dims=5, alpha=1, sigma=1):
 set up
 """
 
-# path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
-# datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/\
-# proj_brainstem/data/"
 path = '/home/jhansen/gitrepos/hansen_brainstemfc/'
-datapath='/home/jhansen/data-2/brainstem/'
+datapath = '/home/jhansen/data-2/brainstem/'
 
 parc = 400
 
@@ -90,7 +86,13 @@ fc = fc_matlab['C_BSwithHO_mean']
 # load region info file
 info = pd.read_csv(path+'data/region_info_Schaefer'
                    + str(parc) + '.csv', index_col=0)
-info['rsn'] = pd.Categorical(info['rsn'], categories=['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default'])
+info['rsn'] = pd.Categorical(info['rsn'], categories=['Vis',
+                                                      'SomMot',
+                                                      'DorsAttn',
+                                                      'SalVentAttn',
+                                                      'Limbic',
+                                                      'Cont',
+                                                      'Default'])
 info.reindex
 
 # handy indices
@@ -127,8 +129,10 @@ plt.ion()
 ax = plot_mod_heatmap(np.corrcoef(fc_reg[:, idx_ctx].T),
                       info.query("structure == 'cortex'")['rsn'],
                       cmap=cmap, vmin=-1, vmax=1,
-                      xlabels=np.unique(info.query("structure == 'cortex'")['rsn']),
-                      ylabels=np.unique(info.query("structure == 'cortex'")['rsn']),
+                      xlabels=np.unique(info.query("structure == 'cortex'")
+                                        ['rsn']),
+                      ylabels=np.unique(info.query("structure == 'cortex'")
+                                        ['rsn']),
                       rasterized=True)
 ax.set_title('ctx-->bstem FC similarity')
 plt.tight_layout()
@@ -142,29 +146,32 @@ fc_grad, u, s, v = diffusion_map_embed(fc[np.ix_(idx_ctx, idx_ctx)],
 
 # brainstem gradient
 fc_grad_bstem, u, s, v = diffusion_map_embed(np.corrcoef(fc_reg[:, idx_ctx].T),
-                                no_dims=3, alpha=0.5)
+                                             no_dims=3, alpha=0.5)
 
 h = sns.jointplot(x=fc_grad[:, 0], y=fc_grad_bstem[:, 0])
 h.set_axis_labels("cortex-cortex gradient", "cortex-brainstem gradient")
 h.figure.tight_layout()
-h.figure.savefig(path+'figures/eps/Schaefer' + str(parc) + '/jointplot_gradients.eps')
+h.figure.savefig(path+'figures/eps/Schaefer' + str(parc)
+                 + '/jointplot_gradients.eps')
 
 r, p, _ = corr_spin(fc_grad[:, 0], fc_grad_bstem[:, 0], spins, nspins)
 
 brain = plot_fsaverage(data=fc_grad_bstem[:, 0],
-                   lhannot=annot.lh, rhannot=annot.rh,
-                   colormap=cmap,
-                   vmin=-np.max(np.abs(fc_grad_bstem[:, 0])),
-                   vmax=np.max(np.abs(fc_grad_bstem[:, 0])),
-                   views=['lat', 'med'],
-                   data_kws={'representation': "wireframe"})
+                       lhannot=annot.lh, rhannot=annot.rh,
+                       colormap=cmap,
+                       vmin=-np.max(np.abs(fc_grad_bstem[:, 0])),
+                       vmax=np.max(np.abs(fc_grad_bstem[:, 0])),
+                       views=['lat', 'med'],
+                       data_kws={'representation': "wireframe",
+                                 'line_width': 4.0})
 brain.save_image(path+'figures/eps/Schaefer'
                  + str(parc) + '/surface_fc_grad_dmebstem.eps')
 
 # brainstem profiles
 data = np.sum(fc_reg[:, idx_ctx[fc_grad_bstem[:, 0] < 0]], axis=1)
 fig = plot_point_brain(data,
-                       coords=info.query('structure == "brainstem"')[['x', 'y', 'z']].values,
+                       coords=info.query('structure == "brainstem"')
+                       [['x', 'y', 'z']].values,
                        views_orientation='horizontal',
                        views=['coronal_rev', 'sagittal', 'axial'],
                        cbar=True, size=str_bstem_ctx,
@@ -176,7 +183,8 @@ fig.savefig(path+'figures/eps/Schaefer'
 
 data = np.sum(fc_reg[:, idx_ctx[fc_grad_bstem[:, 0] > 0]], axis=1)
 fig = plot_point_brain(data,
-                       coords=info.query('structure == "brainstem"')[['x', 'y', 'z']].values,
+                       coords=info.query('structure == "brainstem"')
+                       [['x', 'y', 'z']].values,
                        views_orientation='horizontal',
                        views=['coronal_rev', 'sagittal', 'axial'],
                        cbar=True, size=str_bstem_ctx,
@@ -187,11 +195,10 @@ fig.savefig(path+'figures/eps/Schaefer'
             + str(grad+1) + '_pos.eps')
 
 # community detection (supplement)
-
 gamma_range = [x/10.0 for x in range(1, 61, 1)]
 
-assignments_ctx = np.load(path+'results/Schaefer'
-                            + str(parc) +'/community_detection/assignments_ctx.npy').T
+assignments_ctx = np.load(path+'results/Schaefer' + str(parc)
+                          + '/community_detection/assignments_ctx.npy').T
 zrand = np.load(path+'results/Schaefer' + str(parc)
                 + '/community_detection/Zrand_ctx.npy')
 
@@ -211,7 +218,8 @@ brain = plot_fsaverage(data=assignments_ctx[idx, :],
                        lhannot=annot.lh, rhannot=annot.rh,
                        colormap=cmap,
                        views=['lat', 'med'],
-                       data_kws={'representation': "wireframe"})
+                       data_kws={'representation': "wireframe",
+                                 'line_width': 4.0})
 brain.save_image(path+'figures/eps/Schaefer'
                  + str(parc) + '/surface_ctx_communities_gamma_'
                  + str(idx) + '.eps')
@@ -220,12 +228,14 @@ brain.save_image(path+'figures/eps/Schaefer'
 for ii, i in enumerate(np.unique(assignments_ctx[idx, :])):
     data = np.sum(fc_reg[:, idx_ctx[assignments_ctx[idx, :] == i]], axis=1)
     fig = plot_point_brain(data,
-                           coords=info.query("structure == 'brainstem'")[['x', 'y', 'z']].values,
+                           coords=info.query("structure == 'brainstem'")
+                           [['x', 'y', 'z']].values,
                            size=str_bstem_ctx ** 1.2,
                            views_orientation='horizontal',
                            views=['coronal_rev', 'sagittal', 'axial'],
                            views_size=(5, 5),
-                           cmap=[PuBuGn_9.mpl_colormap, PuRd_9.mpl_colormap][ii],
+                           cmap=[PuBuGn_9.mpl_colormap,
+                                 PuRd_9.mpl_colormap][ii],
                            cbar=True,
                            edgecolor=None)
     fig.savefig(path+'figures/eps/Schaefer'
@@ -248,7 +258,7 @@ ax[0].set_xticks(np.arange(-1, 60, 10))
 xticklabels = gamma_range[9::10]
 xticklabels.insert(0, 0.0)
 ax[0].set_xticklabels(xticklabels)
-ax2=ax[0].twinx()
+ax2 = ax[0].twinx()
 ax2.plot(v, c='blue')
 ax2.set_ylabel('var', c='blue')
 ax2.tick_params(axis='y', labelcolor='blue')
@@ -260,4 +270,5 @@ ax[1].set_xticks(np.arange(-1, 60, 10))
 ax[1].set_xticklabels(xticklabels)
 ax[1].set_xlabel('gamma')
 ax[1].vlines(x=5, ymin=0, ymax=42)
-fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/plot_community_meanvar_ctx.eps')
+fig.savefig(path+'figures/eps/Schaefer' + str(parc)
+            + '/plot_community_meanvar_ctx.eps')

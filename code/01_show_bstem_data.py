@@ -2,7 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from netneurotools.plotting import plot_point_brain
+from netneurotools.plotting import plot_point_brain, plot_fsaverage
+from netneurotools.datasets import fetch_schaefer2018
 import scipy.io
 import pandas as pd
 from scipy.spatial.distance import squareform, pdist
@@ -14,13 +15,11 @@ from palettable.colorbrewer.sequential import PuBuGn_9
 set up
 """
 
-# path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
-# datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/\
-# proj_brainstem/data/"
 path = '/home/jhansen/gitrepos/hansen_brainstemfc/'
-datapath='/home/jhansen/data-2/brainstem/'
+datapath = '/home/jhansen/data-2/brainstem/'
 
 parc = 400
+annot = fetch_schaefer2018('fsaverage')[str(parc) + 'Parcels7Networks']
 
 # load FC matlab file (not on github, too big)
 fc_matlab = scipy.io.loadmat(datapath+'brainstem_fc/parcellated/Schaefer'
@@ -62,7 +61,7 @@ parcel size + tSNR (supplement)
 """
 
 # tSNR whole brain
-fig = plot_point_brain(data=info.query("structure == 'brainstem'or \
+fig = plot_point_brain(data=info.query("structure == 'brainstem' or \
                                        structure == 'cortex'")['tSNR'],
                        coords=info.query('structure == "brainstem" or \
                                          structure == "cortex"')
@@ -74,6 +73,18 @@ fig = plot_point_brain(data=info.query("structure == 'brainstem'or \
                        views_size=(2.4, 2.4))
 fig.savefig(path+'figures/eps/Schaefer'
             + str(parc) + '/pointbrain_tsnr.eps')
+
+# tSNR cortical surface only
+brain = plot_fsaverage(data=info.query("structure == 'cortex'")['tSNR'],
+                       lhannot=annot.lh, rhannot=annot.rh,
+                       vmin=info['tSNR'].min(),
+                       vmax=info['tSNR'].max(),
+                       colormap=PuBuGn_9.mpl_colormap,
+                       views=['lat', 'med'],
+                       data_kws={'representation': "wireframe",
+                                 'line_width': 4.0})
+brain.save_image(path+'figures/eps/Schaefer' + str(parc)
+                 + '/surface_ctx_tsnr.eps')
 
 # tSNR brainstem only
 fig = plot_point_brain(data=info.query("structure == 'brainstem'")['tSNR'],
@@ -116,9 +127,12 @@ fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/scatter_tsnr.eps')
 Heatmaps and histograms
 """
 
-idx1 = info.query("structure == 'brainstem' | structure == 'cortex'").sort_values(by=['structure', 'hemisphere', 'rsn']).index.values
-idx2 = info.query("structure == 'brainstem'").sort_values(by=['hemisphere']).index.values
-idx3 = info.query("structure == 'cortex'").sort_values(by=['hemisphere', 'rsn']).index.values
+idx1 = info.query("structure == 'brainstem' | structure == 'cortex'").\
+    sort_values(by=['structure', 'hemisphere', 'rsn']).index.values
+idx2 = info.query("structure == 'brainstem'").\
+    sort_values(by=['hemisphere']).index.values
+idx3 = info.query("structure == 'cortex'").\
+    sort_values(by=['hemisphere', 'rsn']).index.values
 
 # FC heatmaps
 fig, axs = plt.subplots(1, 3, figsize=(15, 5))
@@ -157,9 +171,9 @@ ax.legend(["bstem only", "bstem to ctx", "ctx only"])
 fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/kdeplot_fc.eps')
 
 # t-test: is bstem-ctx fc > bstem-bstem fc?
-t, p= ttest_ind(fc[np.ix_(idx2, idx3)].flatten(),
-                fc[np.ix_(idx2, idx2)][np.triu_indices(len(idx2), k=1)],
-                equal_var=False)
+t, p = ttest_ind(fc[np.ix_(idx2, idx3)].flatten(),
+                 fc[np.ix_(idx2, idx2)][np.triu_indices(len(idx2), k=1)],
+                 equal_var=False)
 # Ttest_indResult(statistic=33.91973991912895, pvalue=4.8001996581462265e-198)
 
 """

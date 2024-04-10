@@ -20,6 +20,7 @@ from sklearn.linear_model import LinearRegression
 from netneurotools.modularity import consensus_modularity
 from statsmodels.stats.multitest import multipletests
 from scipy.spatial.distance import squareform, pdist
+import pickle
 
 
 def regress_out(x, y):
@@ -49,7 +50,8 @@ def community_detection(A, gamma_range):
 
 
 def scale_values(values, vmin, vmax, axis=None):
-    s = (values - values.min(axis=axis)) / (values.max(axis=axis) - values.min(axis=axis))
+    s = (values - values.min(axis=axis)) /\
+        (values.max(axis=axis) - values.min(axis=axis))
     s = s * (vmax - vmin)
     s = s + vmin
     return s
@@ -136,15 +138,16 @@ def get_reg_r_pval(X, y, spins, nspins):
     return (1 + sum(null > emp))/(nspins + 1)
 
 
+def get_interactional_dominance(x, y, idx):
+    return get_reg_r_sq(x, y) - get_reg_r_sq(np.delete(x, idx, axis=1), y)
+
+
 """
 set up
 """
 
-# path = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_brainstem/"
-# datapath = "C:/Users/justi/OneDrive - McGill University/MisicLab/\
-# proj_brainstem/data/"
 path = '/home/jhansen/gitrepos/hansen_brainstemfc/'
-datapath='/home/jhansen/data-2/brainstem/'
+datapath = '/home/jhansen/data-2/brainstem/'
 
 parc = 400
 
@@ -190,10 +193,40 @@ str_bstem_ctx = np.sum(fc[np.ix_(idx_bstem, idx_ctx)], axis=1)
 plt.ion()
 rho = np.array([spearmanr(str_bstem_ctx, fc[i, idx_bstem])[0] for i in idx_bc])
 plt.figure()
-sns.kdeplot(rho)
+sns.kdeplot(rho, label='all')
+sns.kdeplot(rho[:len(idx_bstem)], label='brainstem')
+sns.kdeplot(rho[len(idx_bstem):], label='cortex')
+plt.legend()
 plt.xlabel('spearman r')
 plt.tight_layout()
-plt.savefig(path+'figures/eps/Schaefer' + str(parc) + '/kdeplot_rho_fc_strength.eps')
+plt.savefig(path+'figures/eps/Schaefer' + str(parc)
+            + '/kdeplot_rho_fc_strength.eps')
+
+# plot rhos on cortical surface and brainstem
+brain = plot_fsaverage(data=rho[len(idx_bstem):],
+                       lhannot=annot.lh, rhannot=annot.rh,
+                       colormap=PuBuGn_9.mpl_colormap,
+                       vmax=np.max(rho[len(idx_bstem):]),
+                       vmin=np.min(rho[len(idx_bstem):]),
+                       views=['lat', 'med'],
+                       data_kws={'representation': "wireframe",
+                                 'line_width': 4.0})
+brain.save_image(path+'figures/eps/Schaefer' + str(parc)
+                 + '/surface_ctx_rho_bstemhubs.eps')
+
+fig = plot_point_brain(rho[:len(idx_bstem)],
+                       coords=info.query("structure == 'brainstem'")
+                       [['x', 'y', 'z']].values,
+                       size=str_bstem_ctx ** 1.2,
+                       views_orientation='horizontal',
+                       views=['coronal_rev', 'sagittal', 'axial'],
+                       views_size=(5, 5),
+                       cmap=PuBuGn_9.mpl_colormap, cbar=True,
+                       vmin=np.min(rho[:len(idx_bstem)]),
+                       vmax=np.max(rho[:len(idx_bstem)]),
+                       edgecolor=None)
+fig.savefig(path+'figures/eps/Schaefer' + str(parc)
+            + '/pointbrain_bstem_rho_bstemhubs.eps')
 
 # regression
 fc_reg = np.zeros((len(idx_bstem), len(fc)))
@@ -214,7 +247,8 @@ plt.savefig(path+'figures/eps/Schaefer' + str(parc) + '/heatmap_fcreg.eps')
 # plot regression example
 fig, ax = plt.subplots(2, 1, figsize=(5, 5))
 ax[0].plot(fc[info.query("labels == 'IC_r'").index, idx_bstem])
-ax[0].plot(fc[info.query("labels == '7Networks_LH_Vis_26'").index, idx_bstem])  # pick Vis_2 for schaefer100
+# pick Vis_2 for schaefer100
+ax[0].plot(fc[info.query("labels == '7Networks_LH_Vis_26'").index, idx_bstem])
 ax[0].set_xlabel('brainstem regions')
 ax[0].set_ylabel('FC')
 ax[0].legend(['IC_r', 'Vis'])
@@ -224,14 +258,16 @@ ax[1].set_xlabel('brainstem regions')
 ax[1].set_ylabel('FC')
 ax[1].legend(['IC_r', 'Vis'])
 fig.tight_layout()
-fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/plot_toy_spaceseries.eps')
+fig.savefig(path+'figures/eps/Schaefer' + str(parc)
+            + '/plot_toy_spaceseries.eps')
 
 """
 community detection
 """
 
 gamma_range = [x/10.0 for x in range(1, 61, 1)]
-# consensus, qall, zrand = community_detection(np.corrcoef(fc_reg[:, idx_ctx]), gamma_range)
+# consensus, qall, zrand = community_detection(np.corrcoef(fc_reg[:, idx_ctx]),
+#                                              gamma_range)
 
 assignments_bstem = np.load(path+'results/Schaefer' + str(parc)
                             + '/community_detection/assignments_bstem.npy')
@@ -254,7 +290,7 @@ ax[0].set_xticks(np.arange(-1, 60, 10))
 xticklabels = gamma_range[9::10]
 xticklabels.insert(0, 0.0)
 ax[0].set_xticklabels(xticklabels)
-ax2=ax[0].twinx()
+ax2 = ax[0].twinx()
 ax2.plot(v, c='blue')
 ax2.set_ylabel('var', c='blue')
 ax2.tick_params(axis='y', labelcolor='blue')
@@ -270,10 +306,11 @@ ax[1].set_xlabel('gamma')
 ax[1].vlines(x=18, ymin=2, ymax=24)
 ax[1].vlines(x=21, ymin=2, ymax=24)
 ax[1].vlines(x=27, ymin=2, ymax=24)
-fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/plot_community_meanvar.eps')
+fig.savefig(path+'figures/eps/Schaefer' + str(parc)
+            + '/plot_community_meanvar.eps')
 
 # plot heatmap with modules
-idx = 27   # gamma = 2.2; also show gamma = 1.9 and gamma = 2.8;;; for Schaefer-100 try gamma = 2.8, 0.6 (2), 2.7 (4)
+idx = 27   # gamma = 2.8; also show gamma = 1.9 and gamma = 2.2;
 fig = plot_mod_heatmap(data=np.corrcoef(fc_reg[:, idx_ctx]),
                        communities=assignments_bstem[idx, :],
                        cmap=cmap, vmin=-0.9, vmax=0.9,
@@ -285,8 +322,9 @@ plt.savefig(path+'figures/eps/Schaefer'
 
 # plot communities on brainstem
 fig = plot_point_brain(assignments_bstem[idx, :],
-                       coords=info.query("structure == 'brainstem'")[['x', 'y', 'z']].values,
-                       size=str_bstem_ctx ** 1.2,
+                       coords=info.query("structure == 'brainstem'")
+                       [['x', 'y', 'z']].values,
+                       size=str_bstem_ctx ** 1.5,
                        views_orientation='horizontal',
                        views=['coronal_rev', 'sagittal', 'axial'],
                        views_size=(5, 5),
@@ -301,17 +339,55 @@ community-specific cortical FC patterns
 """
 
 for i in np.unique(assignments_bstem[idx, :]):
-    data = np.sum(fc_reg[np.ix_(idx_bstem[assignments_bstem[idx, :] == i], idx_ctx)], axis=0)
-    brain = plot_fsaverage(data=data,
+    summap = np.sum(fc_reg[np.ix_(idx_bstem[assignments_bstem[idx, :] == i],
+                                  idx_ctx)], axis=0)
+    brain = plot_fsaverage(data=summap,
                            lhannot=annot.lh, rhannot=annot.rh,
                            colormap=cmap,
-                           vmax=np.max(np.abs(data)),
-                           vmin=-np.max(np.abs(data)),
+                           vmax=np.max(np.abs(summap)),
+                           vmin=-np.max(np.abs(summap)),
                            views=['lat', 'med'],
-                           data_kws={'representation': "wireframe"})
+                           data_kws={'representation': "wireframe",
+                                     'line_width': 4.0})
     brain.save_image(path+'figures/eps/Schaefer'
                      + str(parc) + '/surface_ctx_community_'
                      + str(i) + '_gamma_' + str(idx) + '.eps')
+
+    # going in the supplement
+    varmap = np.var(fc_reg[np.ix_(idx_bstem[assignments_bstem[idx, :] == i],
+                                  idx_ctx)], axis=0)
+    brain = plot_fsaverage(data=varmap,
+                           lhannot=annot.lh, rhannot=annot.rh,
+                           colormap=PuBuGn_9.mpl_colormap,
+                           vmax=0.000475,
+                           vmin=0,
+                           views=['lat', 'med'],
+                           data_kws={'representation': "wireframe",
+                                     'line_width': 4.0})
+    brain.save_image(path+'figures/eps/Schaefer'
+                     + str(parc) + '/surface_ctx_community_'
+                     + str(i) + '_gamma_' + str(idx) + '_var.eps')
+
+# how correlated is each brainstem nucleus with its community's fc pattern
+rhos = np.zeros(58)
+for i in range(len(idx_bstem)):
+    samelabel = np.where(assignments_bstem[idx, :]
+                         == assignments_bstem[idx, i])[0]
+    summap = np.sum(fc_reg[np.ix_(samelabel, idx_ctx)], axis=0)
+    rhos[i] = spearmanr(fc_reg[i, idx_ctx], summap)[0]
+
+fig = plot_point_brain(rhos,
+                       coords=info.query("structure == 'brainstem'")
+                       [['x', 'y', 'z']].values,
+                       size=str_bstem_ctx ** 1.2,
+                       views_orientation='horizontal',
+                       views=['coronal_rev', 'sagittal', 'axial'],
+                       views_size=(5, 5),
+                       cmap=PuBuGn_9.mpl_colormap, cbar=True,
+                       vmin=0, vmax=1,
+                       edgecolor=None)
+fig.savefig(path+'figures/eps/Schaefer'
+            + str(parc) + '/pointbrain_bstem_community_rhos.eps')
 
 
 """
@@ -319,17 +395,19 @@ neurosynth decoding
 """
 
 nsynth = pd.read_csv(path+'data/neurosynth/atl-schaefer2018_res-'
-                     + str(parc) +'_neurosynth.csv',
+                     + str(parc) + '_neurosynth.csv',
                      index_col=0)
 
 for commID in np.unique(assignments_bstem[idx, :]):
     print(commID)
-    data = np.sum(fc_reg[np.ix_(idx_bstem[assignments_bstem[idx, :] == commID], idx_ctx)], axis=0)
+    data = np.sum(fc_reg[np.ix_(idx_bstem[assignments_bstem[idx, :] == commID],
+                                idx_ctx)], axis=0)
     rho = np.array([spearmanr(data, nsynth[key])[0] for key in nsynth.keys()])
     sortidx = np.argsort(rho)
     fig, ax = plt.subplots(figsize=(5, 4))
     nbar = 12
-    pspin = np.array([corr_spin(data, nsynth[key], spins, nspins)[1] for key in nsynth.keys().values[sortidx][-nbar:]])
+    pspin = np.array([corr_spin(data, nsynth[key], spins, nspins)[1]
+                      for key in nsynth.keys().values[sortidx][-nbar:]])
     pspin = multipletests(pspin, method='fdr_bh')[1]
     ax.barh(np.arange(nbar),
             np.sort(rho)[-nbar:],
@@ -343,13 +421,48 @@ for commID in np.unique(assignments_bstem[idx, :]):
                 + str(parc) + '/bar_community_'
                 + str(commID) + '_nsynth_gamma_' + str(idx) + '.eps')
 
+# also do it for the strength map (supplement)
+str_ctx_bstem = np.sum(fc[np.ix_(idx_bstem, idx_ctx)], axis=0)
+
+rho = np.array([spearmanr(str_ctx_bstem, nsynth[key])[0]
+                for key in nsynth.keys()])
+sortidx = np.argsort(rho)
+fig, ax = plt.subplots(figsize=(5, 4))
+nbar = 12
+ax.barh(np.arange(nbar),
+        np.sort(rho)[-nbar:],
+        tick_label=nsynth.keys().values[sortidx][-nbar:])
+ax.set_xlabel('spearman r')
+fig.tight_layout()
+fig.savefig(path+'figures/eps/Schaefer'
+            + str(parc) + '/bar_nsynth_ctxstrength.eps')
+
+# also show heatmap of all correlations
+rho = []
+for i, commID in enumerate(np.unique(assignments_bstem[idx, :])):
+    print(commID)
+    data = np.sum(fc_reg[np.ix_(idx_bstem[assignments_bstem[idx, :] == commID],
+                                idx_ctx)], axis=0)
+    rho.append(np.array([spearmanr(data, nsynth[key])[0]
+                         for key in nsynth.keys()]))
+rho = np.array(rho)
+fig, ax = plt.subplots(figsize=(20, 5))
+sns.heatmap(rho, cmap=cmap, square=True,
+            vmin=-np.max(abs(rho)), vmax=np.max(abs(rho)),
+            xticklabels=nsynth.keys(),
+            yticklabels=np.unique(assignments_bstem[idx, :]),
+            linewidths=.5, ax=ax)
+fig.tight_layout()
+fig.savefig(path+'figures/eps/Schaefer' + str(parc)
+            + '/heatmap_nsynth_rhos.eps')
+
 
 """
 receptor decoding
 """
 
-# recpath = "C:/Users/justi/OneDrive - McGill University/MisicLab/proj_receptors/github/hansen_receptors/data/PET_parcellated/scale" + str(parc) + "/"
-recpath = '/home/jhansen/gitrepos/hansen_receptors/data/PET_parcellated/scale' + str(parc) + '/'
+recpath = '/home/jhansen/gitrepos/hansen_receptors/data/PET_parcellated/scale'\
+     + str(parc) + '/'
 
 rec_cols = ['5HT1a_cumi_hc8_beliveau',
             '5HT1b_p943_hc65_gallezot',
@@ -373,7 +486,9 @@ rec_cols = ['5HT1a_cumi_hc8_beliveau',
 receptor_ctx = dict([])
 for rec in rec_cols:
     receptor_ctx[rec] = np.genfromtxt(recpath+rec+'.csv', delimiter=',')
-receptor_ctx = pd.DataFrame(data=receptor_ctx, index=info.query('structure == "cortex"')['labels'])
+receptor_ctx = pd.DataFrame(data=receptor_ctx,
+                            index=info.query('structure == "cortex"')
+                            ['labels'])
 
 ncommun = np.max(assignments_bstem[idx, :]).astype(int)
 
@@ -384,18 +499,24 @@ model_pval = np.zeros((ncommun, ))
 
 for i in np.unique(assignments_bstem[idx, :]):
     print(i)
-    fcmap = np.sum(fc_reg[np.ix_(idx_bstem[assignments_bstem[idx, :] == i], idx_ctx)], axis=0)
-    model_metrics['community' + str(i)] = get_dominance_stats(zscore(receptor_ctx.values),
-                                                              zscore(fcmap))[0]
+    fcmap = np.sum(fc_reg[np.ix_(idx_bstem[assignments_bstem[idx, :] == i],
+                                 idx_ctx)], axis=0)
+    model_metrics['community' + str(i)] =\
+        get_dominance_stats(zscore(receptor_ctx.values), zscore(fcmap))[0]
+    with open(path + 'results/Schaefer' + str(parc)
+              + '/dominance_analysis/model_metrics_community'
+              + str(i) + '.pkl', 'wb') as f:
+        pickle.dump(model_metrics['community' + str(i)], f)
     # cross validate the model
     # train_metric[:, int(i)-1], test_metric[:, int(i)-1] = \
     #     cv_slr_distance_dependent(zscore(receptor_ctx.values),
     #                               zscore(fcmap),
-    #                               info.query("structure == 'cortex'")[['x', 'y', 'z']].values
+    #                               info.query("structure == 'cortex'")
+    #                               [['x', 'y', 'z']].values
     #                               , .75, metric='corr')
     # get model pval
     # model_pval[int(i)-1] = get_reg_r_pval(zscore(receptor_ctx.values),
-    #                                zscore(fcmap), 
+    #                                zscore(fcmap),
     #                                spins, nspins)
 
 dominance = np.zeros((ncommun, receptor_ctx.shape[1]))
@@ -405,9 +526,12 @@ for i in range(len(model_metrics)):
 
 model_pval = multipletests(model_pval, method='fdr_bh')[1]
 
-np.save(path+'results/Schaefer' + str(parc) + '/dominance.npy', dominance)
-np.save(path+'results/Schaefer' + str(parc) + '/dominance_cv_train.npy', train_metric)
-np.save(path+'results/Schaefer' + str(parc) + '/dominance_cv_test.npy', test_metric)
+np.save(path+'results/Schaefer' + str(parc)
+        + '/dominance_analysis/dominance.npy', dominance)
+np.save(path+'results/Schaefer' + str(parc)
+        + '/dominance_analysis/dominance_cv_train.npy', train_metric)
+np.save(path+'results/Schaefer' + str(parc)
+        + '/dominance_analysis/dominance_cv_test.npy', test_metric)
 
 # dominance heatmap
 fig, ax = plt.subplots(figsize=(10, 3))
@@ -437,7 +561,55 @@ ax1.set_xticklabels(np.arange(1, ncommun+1))
 ax2.set_xticklabels(np.arange(1, ncommun+1))
 ax2.set(ylabel='test set correlation', ylim=(-1, 1))
 fig.tight_layout()
-fig.savefig(path+'figures/eps/Schaefer' + str(parc) +'/violin_crossval.eps')
+fig.savefig(path+'figures/eps/Schaefer' + str(parc) + '/violin_crossval.eps')
+
+# also do it for the strength map (supplement)
+dominance = get_dominance_stats(zscore(receptor_ctx.values),
+                                zscore(str_ctx_bstem))[0]
+
+fig, ax = plt.subplots()
+sns.heatmap((dominance['total_dominance'] /
+            dominance['full_r_sq']).reshape(1, -1),
+            xticklabels=[rec.split('_')[0] for rec in rec_cols],
+            yticklabels=['ctxhubs'],
+            cmap=PuBuGn_9.mpl_colormap, square=True,
+            linewidths=.5, ax=ax)
+fig.tight_layout()
+fig.savefig(path+'figures/eps/Schaefer' + str(parc)
+            + '/heatmap_dominance_ctxstrength.eps')
+
+# look at interactional and individual dominance (supplement)
+
+interactional_dominance = dict([])
+individual_dominance = dict([])
+dominance = np.load(path+'results/Schaefer' + str(parc)
+                    + '/dominance_analysis/dominance.npy')
+
+for i in np.unique(assignments_bstem[idx, :]):
+    fcmap = np.sum(fc_reg[np.ix_(idx_bstem[assignments_bstem[idx, :] == i],
+                                 idx_ctx)], axis=0)
+    X = zscore(receptor_ctx.values)
+    Y = zscore(fcmap)
+    dom = np.array([get_interactional_dominance(X, Y, rec)
+                    for rec in range(receptor_ctx.shape[1])])
+    interactional_dominance['community' + str(i)] = dom
+
+    dom = np.array([get_reg_r_sq(X[:, rec].reshape(-1, 1), Y)
+                    for rec in range(receptor_ctx.shape[1])])
+    individual_dominance['community' + str(i)] = dom
+
+fig, axs = plt.subplots(2, 1, figsize=(10, 5))
+for i, dom in enumerate([interactional_dominance, individual_dominance]):
+    sns.heatmap(np.array(list(dom.values())) /
+                np.sum(dominance, axis=1).reshape(-1, 1),
+                xticklabels=[rec.split('_')[0] for rec in rec_cols],
+                yticklabels=np.unique(assignments_bstem[idx, :]),
+                cmap=PuBuGn_9.mpl_colormap, square=True,
+                linewidths=.5, ax=axs[i])
+    axs[i].set_title('interactional' if i == 0 else 'individual')
+fig.tight_layout()
+fig.savefig(path+'figures/eps/Schaefer' + str(parc)
+            + '/heatmap_other_dominances.eps')
 
 
 """
@@ -445,22 +617,57 @@ print regions in community
 """
 
 for i in range(1, ncommun + 1):
-    np.savetxt(path+'results/Schaefer' + str(parc) + '/community_detection/community_regions_' + str(i) + '.txt',
-               info.query("structure == 'brainstem'")['labels'][assignments_bstem[idx, :] == i].values,
-               delimiter = " ",
+    np.savetxt(path+'results/Schaefer' + str(parc)
+               + '/community_detection/community_regions_' + str(i) + '.txt',
+               info.query("structure == 'brainstem'")['labels']
+               [assignments_bstem[idx, :] == i].values,
+               delimiter=" ",
                newline="\n",
                fmt="%s")
 
 # save as tex table
-nrows = np.max([np.sum(assignments_bstem[idx, :] == i) for i in range(1, ncommun + 1)])
+nrows = np.max([np.sum(assignments_bstem[idx, :] == i)
+                for i in range(1, ncommun + 1)])
 community_nuclei = dict.fromkeys(['green', 'yellow', 'pink', 'blue', 'grey'])
 for i, key in enumerate(community_nuclei.keys()):
     community_nuclei[key] = []
-    nuclei_names = info.query("structure == 'brainstem'")['labels'][assignments_bstem[idx, :] == i+1].values
+    nuclei_names = info.query("structure == 'brainstem'")['labels'][
+        assignments_bstem[idx, :] == i+1].values
     for row in range(nrows):
         try:
             community_nuclei[key].append(nuclei_names[row])
         except IndexError:
             community_nuclei[key].append(" ")
-pd.DataFrame(data=community_nuclei).to_latex(path+'results/Schaefer' + str(parc) + '/community_detection/comunity_regions_latex.txt',
-                                             index=False)
+pd.DataFrame(data=community_nuclei).to_latex(
+    path + 'results/Schaefer' + str(parc)
+    + '/community_detection/comunity_regions_latex.txt',
+    index=False)
+
+
+"""
+count how many bilateral nuclei are split
+"""
+
+data = {'labels': info.query("structure == 'brainstem'")['labels'],
+        'assignments_bstem': assignments_bstem[idx, :]}
+data = pd.DataFrame(data)
+
+same_count = 0
+different_count = 0
+
+# iterate through each label
+for label in data['labels']:
+    # check if the label has '_r' or '_l'
+    if label.endswith('_r'):
+        counterpart = label[:-2] + '_l'
+        counterpart_assignment = data.loc[info['labels'] == counterpart,
+                                          'assignments_bstem'].values[0]
+        current_assignment = data.loc[info['labels'] == label,
+                                      'assignments_bstem'].values[0]
+        if counterpart_assignment == current_assignment:
+            same_count += 1
+        else:
+            different_count += 1
+            print(label)
+
+print(same_count, "/", same_count + different_count, "together")

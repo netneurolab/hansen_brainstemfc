@@ -1,0 +1,32 @@
+\begin{tabular}{llll}
+\toprule
+grey & green & blue & yellow \\
+\midrule
+MnR & PAG_2020 & mRT_merged_l & SubC_l \\
+SN_subregion2_l & SN_subregion1_l & PTg_l & ION_l \\
+RN_subregion2_l & RN_subregion1_l & isRT_l & MiTg_spth_l \\
+IC_l & CnF_l & LDTg_CGPn_l & LPB_l \\
+PCRtA_l & SC_l & PnO_PnC_l & Ve_l \\
+SOC_l & MiTg_spth_r & LC_l & sMRtComb_l \\
+RMg & SC_r & VTA_PBP_l & VSM_l \\
+ROb & CnF_r & MPB_l & iMRtComb_l \\
+RPa & RN_subregion1_r & MPB_r & iMRtComb_r \\
+SOC_r & PMnR & VTA_PBP_r & VSM_r \\
+PCRtA_r & STh_subregion2_l & LC_r & sMRtComb_r \\
+IC_r & HTH & PnO_PnC_r & Ve_r \\
+SubC_r & L-Accumbens-area & LDTg_CGPn_r & LPB_r \\
+RN_subregion2_r & R-Accumbens-area & isRT_r & ION_r \\
+STh_subregion1_l &   & PTg_r & L-Pallidum \\
+STh_subregion2_r &   & mRT_merged_r & L-Putamen \\
+STh_subregion1_r &   & SN_subregion2_r & R-Putamen \\
+MG_l &   & SN_subregion1_r & R-Pallidum \\
+MG_r &   & CLi_RLi &   \\
+L-Amygdala &   & DR_2020 &   \\
+L-Hippocampus &   & LG_l &   \\
+R-Hippocampus &   & LG_r &   \\
+R-Amygdala &   & L-Caudate &   \\
+  &   & L-Thalamus-Proper &   \\
+  &   & R-Thalamus-Proper &   \\
+  &   & R-Caudate &   \\
+\bottomrule
+\end{tabular}
