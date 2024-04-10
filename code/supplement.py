@@ -362,6 +362,7 @@ subj_bstem_ctx_strength = np.array([fc[:, :, i][np.ix_(idx_bstem,
 subj_ctx_bstem_strength = np.array([fc[:, :, i][np.ix_(idx_ctx,
                                                        idx_bstem)].sum(axis=1)
                                     for i in range(nsubj)])
+hcpfc = np.load(path+'results/hcp_subjxsubj_fc-spearmanr.npy')
 
 mats = [subj_fc_ctx, subj_fc_bstem, subj_fc_bc,
         subj_bstem_ctx_strength, subj_ctx_bstem_strength]
@@ -376,70 +377,3 @@ ax.set_xticklabels(matnames)
 ax.set_ylabel('spearman r')
 fig.savefig(path+'figures/eps/Schaefer'
             + str(parc) + '/stripplot_subjcorrs.eps')
-
-
-"""
-# regress fc
-fc_reg = np.zeros((len(idx_bstem), len(fc), nsubj))
-for subj in range(nsubj):
-    for i in range(len(fc)):
-        subjstr = np.sum(fc[:, :, subj][np.ix_(idx_bstem, idx_ctx)], axis=1)
-        fc_reg[:, i, subj] = np.squeeze(regress_out(subjstr.reshape(-1, 1),
-                                                    fc[idx_bstem, i, subj].
-                                                    reshape(-1, 1)))
-
-subj_bstem_fcregsim = np.array([np.corrcoef(fc_reg[:, idx_ctx, subj])[
-    np.triu_indices(len(idx_bstem), 1)] for subj in range(nsubj)])
-
-subj_ctx_fcregsim = np.array([np.corrcoef(fc_reg[:, idx_ctx, subj].T)[
-    np.triu_indices(len(idx_ctx), 1)] for subj in range(nsubj)])
-
-# subject-specific community detection oh boy
-out = Parallel(n_jobs=40)(delayed(community_detection)(
-    np.corrcoef(fc_reg[:, idx_ctx, subj]),
-    [x/10.0 for x in range(1, 61, 1)]) for subj in range(nsubj))
-
-# saved as a .pkl dictionary; load it in:
-with open(path + 'results/Schaefer400/community_detection/'
-          + 'community_detection_subj.pkl', 'rb') as f:
-    out = pickle.load(f)
-
-# for each subject, find the gamma that maximizes zrand with group consensus
-grpcon = np.load(path+'results/Schaefer400'
-                 + '/community_detection/assignments_bstem.npy')[27, :]
-
-gamma_idx = np.zeros((nsubj, ))
-for subj in range(nsubj):
-    # calculate zrand index of consensus assignments
-    # for each gamma and group consensus
-    zrands = np.array([zrand(out['subj' + str(subj+1)][0][:, g], grpcon)
-                       for g in range(out['subj' + str(subj+1)][0].shape[1])])
-    gamma_idx[subj] = np.argmax(zrands)
-
-# plot each community assignment
-for subj in range(nsubj):
-    fig = plot_point_brain(out[subj][0][int(gamma_idx[subj]), :],
-                           coords=info.query("structure == 'brainstem'")
-                           [['x', 'y', 'z']].values,
-                           size=np.sum(np.mean(fc, axis=2)[
-                               np.idx_(idx_bstem, idx_ctx)]) ** 1.2,
-                           views_orientation='horizontal',
-                           views=['coronal_rev', 'sagittal', 'axial'],
-                           views_size=(5, 5),
-                           cmap='Accent', cbar=True,
-                           edgecolor=None)
-
-# get modularity of each individual with consensus assignment
-q = np.zeros((nsubj, len(np.unique(grpcon))))
-for subj in range(nsubj):
-    q[subj, :] = get_modularity_sig(np.corrcoef(fc_reg[:, idx_ctx, subj]),
-                                  grpcon,
-                                  2.8)
-
-
-# gradient analysis
-gradients = [diffusion_map_embed(np.corrcoef(fc_reg[:, idx_ctx, subj].T),
-                                 no_dims=1, alpha=0.5)[0]
-             for subj in range(nsubj)]
-subj_gradients = np.array(gradients).squeeze()
-"""
