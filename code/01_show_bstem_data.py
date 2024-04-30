@@ -26,7 +26,9 @@ fc_matlab = scipy.io.loadmat(datapath+'brainstem_fc/parcellated/Schaefer'
                              + str(parc)
                              + '/mean_corrcoeff_full.mat')
 fc = fc_matlab['C_BSwithHO_mean']
-np.save(path+'data/brainstemfc_mean_corrcoeff_full.npy', fc)  # on github
+np.save(path
+        + 'data/brainstemfc_mean_corrcoeff_full_Schaefer{}.npy'.format(parc),
+        fc)
 
 # load region info file
 info = pd.read_csv(path+'data/region_info_Schaefer'
