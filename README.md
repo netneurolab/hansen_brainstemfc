@@ -1,5 +1,5 @@
 # Integrating brainstem and cortical functional architectures
-This repository contains code and data in support of "Integrating brainstem and cortical functional architectures", now up on [bioRxiv](https://www.biorxiv.org/content/10.1101/2023.10.26.564245v1).
+This repository contains code and data in support of "Integrating brainstem and cortical functional architectures", published in [Nature Neuroscience](https://doi.org/10.1038/s41593-024-01787-0).
 All code was written in Python.
 Below, I describe all the foldes and files in details.
 
@@ -27,4 +27,4 @@ I also make use of the [Brainstem Navigator](https://www.nitrc.org/projects/brai
 The [results](results/) folder contains some saved outputs from my scripts, including outputs for the community detection and dominance analysis.
 
 ## `manuscript`
-The [manuscript](manuscript/) folder contains the PDF of the preprint.
+The [manuscript](manuscript/) folder contains the PDF of the preprint and paper.
